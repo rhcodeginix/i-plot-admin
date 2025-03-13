@@ -11,7 +11,12 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <div className="px-6 py-4 flex items-center border-b border-gray2 justify-between">
+      <div
+        className="px-6 py-4 flex items-center border-b border-gray2 justify-between sticky top-0 bg-white"
+        style={{
+          zIndex: 99999999,
+        }}
+      >
         <Link to={"/"}>
           <img src={Ic_logo} alt="logo" />
         </Link>

@@ -1,70 +1,58 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  Form,
-  //   FormControl,
-  //   FormField,
-  //   FormItem,
-  //   FormMessage,
-} from "../../../components/ui/form";
-import Button from "../../../components/common/button";
-
-const formSchema = z.object({});
+import React, { useState } from "react";
+import { Eksterior } from "./Eksterior";
 
 export const Huskonfigurator: React.FC<{ setActiveTab: any }> = ({
   setActiveTab,
 }) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-  });
+  const [activeTabData, setActiveTabData] = useState(0);
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log(data);
-    setActiveTab(2);
-  };
+  const tabData = [
+    { label: "Eksteriør", content: <Eksterior setActiveTab={setActiveTab} /> },
+    { label: "Carport & utebod" },
+    { label: "Inngangsdører" },
+    { label: "Gulv & flis" },
+    { label: "Interiørfarger" },
+    { label: "Bad 1" },
+    { label: "Bad 2" },
+    { label: "Bad 3" },
+    { label: "Ildsted" },
+    { label: "Peis" },
+    { label: "Innvendige dører" },
+    { label: "Listverk" },
+  ];
 
   return (
     <>
       <h3 className="text-darkBlack text-2xl font-semibold mb-8 px-6">
         Her konfigurerer du husmodellen
       </h3>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="relative">
-          <div className="px-6 mb-[70px]">
-            <div className="flex flex-col gap-8">
-              <div className="flex gap-8">
-                <div className="w-[20%]">
-                  <h5 className="text-black text-sm font-medium">
-                    Grunninformasjon
-                  </h5>
-                  <p className="text-gray text-sm whitespace-nowrap">
-                    Legg til bilder og husdetaljer
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-6 w-[80%] shadow-shadow2 px-6 py-5 rounded-lg">
-                  abc
-                </div>
-              </div>
+      <div className="flex gap-6 px-6 relative">
+        <div className="w-[20%] flex flex-col bg-[#F9FAFB] p-3 rounded-lg gap-3 h-[690px] overflow-y-auto overFlowAutoY sticky top-[80px]">
+          {tabData.map((tab, index) => (
+            <button
+              key={index}
+              className={`text-sm rounded-lg text-darkBlack py-3 px-5 flex items-center gap-2 font-semibold bg-white ${
+                activeTabData === index
+                  ? "border-2 border-primary bg-lightPurple rounded-t-[12px]"
+                  : "border border-gray2"
+              }`}
+              onClick={() => setActiveTabData(index)}
+            >
+              <span className="w-5 h-5 rounded-full bg-lightPurple flex items-center justify-center text-darkBlack font-semibold text-xs">
+                {index + 1}
+              </span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {tabData.map((tab, index) =>
+          activeTabData === index ? (
+            <div className="w-[80%] mb-[130px]" key={index}>
+              {tab.content || tab.label}
             </div>
-          </div>
-          <div className="flex justify-end w-full gap-5 items-center sticky bottom-0 bg-white z-50 border-t border-gray2 p-4 left-0">
-            <div onClick={() => form.reset()} className="w-1/2 sm:w-auto">
-              <Button
-                text="Avbryt"
-                className="border border-gray2 text-back text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
-                type="submit"
-              />
-            </div>
-            <Button
-              text="Lagre"
-              className="border border-purple bg-purple text-white text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
-              type="submit"
-            />
-          </div>
-        </form>
-      </Form>
+          ) : null
+        )}
+      </div>
     </>
   );
 };
