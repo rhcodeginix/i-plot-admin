@@ -8,7 +8,6 @@ import { Prisliste } from "./Prisliste";
 
 export const EditHouseModel = () => {
   const [activeTab, setActiveTab] = useState(0);
-
   const tabData = [
     { label: "Husdetaljer" },
     { label: "Huskonfigurator" },
