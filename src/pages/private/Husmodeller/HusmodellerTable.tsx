@@ -27,7 +27,7 @@ const data = [
     id: 1,
     leverandor: Ic_Leverandor,
     Husmodell: Ic_husmodell,
-    husmodell: "ST 66",
+    husmodell: "Almgaard",
     Kategori: "Herskapelig",
     m2: 233,
     soverom: 5,
@@ -135,6 +135,7 @@ export const HusmodellerTable = () => {
         cell: () => (
           <button className="h-8 w-8 flex items-center justify-center">
             <Ellipsis className="h-4 w-4 text-gray-500" />
+            {/* se-husmodell */}
           </button>
         ),
       },

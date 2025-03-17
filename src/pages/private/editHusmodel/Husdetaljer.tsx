@@ -24,6 +24,11 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 import { TextArea } from "../../../components/ui/textarea";
+import { Link } from "react-router-dom";
+import { addDoc, collection, doc, getDocs, query } from "firebase/firestore";
+import { db, storage } from "../../../config/firebaseConfig";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import toast from "react-hot-toast";
 
 const formSchema = z.object({
   TypeObjekt: z.string().min(1, { message: "Velg en Type Objekt." }),
@@ -43,57 +48,65 @@ const formSchema = z.object({
       }),
     z.string(),
   ]),
-  photo3D: z.array(
-    z.union([
-      z
-        .instanceof(File)
-        .refine((file: any) => file === null || file.size <= 10 * 1024 * 1024, {
-          message: "Filstørrelsen må være mindre enn 10 MB.",
-        }),
-      z.string(),
-    ])
-  ),
-  husmodell_name: z.string().min(2, {
+  photo3D: z
+    .array(
+      z.union([
+        z
+          .instanceof(File)
+          .refine(
+            (file: any) => file === null || file.size <= 10 * 1024 * 1024,
+            {
+              message: "Filstørrelsen må være mindre enn 10 MB.",
+            }
+          ),
+        z.string(),
+      ])
+    )
+    .min(1, "Minst ett bilde kreves."),
+  husmodell_name: z.string().min(1, {
     message: "Navn på husmodell må bestå av minst 2 tegn.",
   }),
-  link_3D_image: z.string().min(2, {
-    message: "Link til 3D bilde må bestå av minst 2 tegn.",
-  }),
+  link_3D_image: z
+    .string()
+    .min(1, {
+      message: "Link til 3D bilde må bestå av minst 2 tegn.",
+    })
+    .optional(),
   pris: z.string().min(1, {
     message: "Pris må bestå av minst 1 tegn.",
   }),
-  BRATotal: z.string().min(2, {
+  BRATotal: z.string().min(1, {
     message: "BRA total må bestå av minst 2 tegn.",
   }),
   Bruksareal: z.string().min(1, { message: "Bruksareal må spesifiseres." }),
-  PRom: z.string().min(2, {
+  PRom: z.string().min(1, {
     message: "P-rom må bestå av minst 2 tegn.",
   }),
-  BebygdArealBYA: z.string().min(2, {
+  BebygdArealBYA: z.string().min(1, {
     message: "Bebygd areal (BYA) må bestå av minst 2 tegn.",
   }),
-  Mønehøyde: z.string().min(2, {
+  Mønehøyde: z.number().min(1, {
     message: "Mønehøyde areal (BYA) må bestå av minst 2 tegn.",
   }),
-  Gesimshøyde: z.string().min(2, {
+  Gesimshøyde: z.number().min(1, {
     message: "Gesimshøyde areal (BYA) må bestå av minst 2 tegn.",
   }),
-  LB: z.string().min(2, {
+  LB: z.string().min(1, {
     message: "LB areal (BYA) må bestå av minst 2 tegn.",
   }),
-  Takvinkel: z.string().min(2, {
+  Takvinkel: z.number().min(1, {
     message: "Takvinkel areal (BYA) må bestå av minst 2 tegn.",
   }),
-  BebygdAreal: z.string().min(2, {
+  BebygdAreal: z.number().min(1, {
     message: "Bebygd areal må bestå av minst 2 tegn.",
   }),
-  Soverom: z.number().min(2, {
+  Soverom: z.number().min(1, {
     message: "Soverom må bestå av minst 2 tegn.",
   }),
-  InnvendigBod: z.number().min(2, {
+  InnvendigBod: z.number().min(1, {
     message: "InnvendigBod må bestå av minst 2 tegn.",
   }),
-  Bad: z.number().min(2, {
+  Bad: z.number().min(1, {
     message: "Bad må bestå av minst 2 tegn.",
   }),
   Energimerking: z
@@ -103,13 +116,13 @@ const formSchema = z.object({
     .string()
     .min(1, { message: "TilgjengeligBolig must må spesifiseres." }),
   Tomtetype: z.string().min(1, { message: "Tomtetype must må spesifiseres." }),
-  Hustittel: z.string().min(2, {
+  Hustittel: z.string().min(1, {
     message: "Hustittel må bestå av minst 2 tegn.",
   }),
-  OmHusmodellen: z.string().min(2, {
+  OmHusmodellen: z.string().min(1, {
     message: "OmHusmodellen må bestå av minst 2 tegn.",
   }),
-  TittelVideo: z.string().min(2, {
+  TittelVideo: z.string().min(1, {
     message: "Tittel på video må bestå av minst 2 tegn.",
   }),
   VideoLink: z
@@ -126,9 +139,9 @@ const formSchema = z.object({
     ),
 });
 
-export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
-  setActiveTab,
-}) => {
+export const Husdetaljer: React.FC<{
+  setActiveTab: any;
+}> = ({ setActiveTab }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
@@ -137,14 +150,27 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
   const file3DInputRef = React.useRef<HTMLInputElement | null>(null);
   const filePlantegningerFasaderPhotoInputRef =
     React.useRef<HTMLInputElement | null>(null);
-  const uploadPhoto = form.watch("photo");
-  const uploadPlantegningerFasaderPhoto = form.watch("PlantegningerFasader");
-  const upload3DPhoto = form.watch("photo3D");
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadPhoto: any = form.watch("photo");
+  const uploadPlantegningerFasaderPhoto: any = form.watch(
+    "PlantegningerFasader"
+  );
+  const upload3DPhoto: any = form.watch("photo3D");
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (files) {
-      form.setValue("photo", files[0]);
+      const fileType = "images";
+      const timestamp = new Date().getTime();
+      const fileName = `${timestamp}_${files[0]?.name}`;
+
+      const storageRef = ref(storage, `${fileType}/${fileName}`);
+
+      const snapshot = await uploadBytes(storageRef, files[0]);
+
+      const url = await getDownloadURL(snapshot.ref);
       form.clearErrors("photo");
+      form.setValue("photo", url);
     }
   };
 
@@ -152,21 +178,40 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
     fileInputRef.current?.click();
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const files = event.dataTransfer.files;
-    if (files && files[0]) {
-      form.setValue("photo", files[0]);
+    if (files) {
+      const fileType = "images";
+      const timestamp = new Date().getTime();
+      const fileName = `${timestamp}_${files[0]?.name}`;
+
+      const storageRef = ref(storage, `${fileType}/${fileName}`);
+
+      const snapshot = await uploadBytes(storageRef, files[0]);
+
+      const url = await getDownloadURL(snapshot.ref);
+      form.setValue("photo", url);
+      form.clearErrors("photo");
     }
   };
 
-  const handlePlantegningerFasaderFileChange = (
+  const handlePlantegningerFasaderFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (files) {
-      form.setValue("PlantegningerFasader", files[0]);
+      const fileType = "images";
+      const timestamp = new Date().getTime();
+      const fileName = `${timestamp}_${files[0]?.name}`;
+
+      const storageRef = ref(storage, `${fileType}/${fileName}`);
+
+      const snapshot = await uploadBytes(storageRef, files[0]);
+
+      const url = await getDownloadURL(snapshot.ref);
       form.clearErrors("PlantegningerFasader");
+      form.setValue("PlantegningerFasader", url);
     }
   };
 
@@ -174,23 +219,56 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
     filePlantegningerFasaderPhotoInputRef.current?.click();
   };
 
-  const handlePlantegningerFasaderDrop = (
+  const handlePlantegningerFasaderDrop = async (
     event: React.DragEvent<HTMLDivElement>
   ) => {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files && files[0]) {
+      const fileType = "images";
+      const timestamp = new Date().getTime();
+      const fileName = `${timestamp}_${files[0]?.name}`;
+
+      const storageRef = ref(storage, `${fileType}/${fileName}`);
+
+      const snapshot = await uploadBytes(storageRef, files[0]);
+
+      const url = await getDownloadURL(snapshot.ref);
       form.clearErrors("PlantegningerFasader");
-      form.setValue("PlantegningerFasader", files[0]);
+      form.setValue("PlantegningerFasader", url);
     }
   };
 
-  const handle3DFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handle3DFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (files) {
-      const fileArray = Array.from(files);
-      form.setValue("photo3D", [...(upload3DPhoto || []), ...fileArray]);
-      form.clearErrors("photo3D");
+      let newImages: any = [...(upload3DPhoto || [])];
+
+      for (let i = 0; i < files.length; i++) {
+        const file: any = files[i];
+
+        if (file.size > 2 * 1024 * 1024) {
+          alert("Image size must be less than 2MB.");
+          continue;
+        }
+
+        const fileType = "images";
+        const timestamp = new Date().getTime();
+        const fileName = `${timestamp}_${file?.name}`;
+
+        const storageRef = ref(storage, `${fileType}/${fileName}`);
+
+        const snapshot = await uploadBytes(storageRef, file);
+
+        const url = await getDownloadURL(snapshot.ref);
+
+        newImages.push(url);
+
+        form.setValue("photo3D", [...(upload3DPhoto || []), ...newImages]);
+        form.clearErrors("photo3D");
+      }
     }
   };
 
@@ -198,13 +276,34 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
     file3DInputRef.current?.click();
   };
 
-  const handle3DDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handle3DDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files) {
-      const fileArray = Array.from(files);
-      form.setValue("photo3D", [...(upload3DPhoto || []), ...fileArray]);
-      form.clearErrors("photo3D");
+      let newImages: any = [...upload3DPhoto];
+
+      for (let i = 0; i < files.length; i++) {
+        const file: any = files[i];
+
+        if (file.size > 2 * 1024 * 1024) {
+          alert("Image size must be less than 2MB.");
+          continue;
+        }
+
+        const fileType = "images";
+        const timestamp = new Date().getTime();
+        const fileName = `${timestamp}_${file?.name}`;
+        const storageRef = ref(storage, `${fileType}/${fileName}`);
+
+        const snapshot = await uploadBytes(storageRef, file);
+
+        const url = await getDownloadURL(snapshot.ref);
+
+        newImages.push(url);
+
+        form.setValue("photo3D", [...(upload3DPhoto || []), ...newImages]);
+        form.clearErrors("photo3D");
+      }
     }
   };
 
@@ -221,11 +320,24 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log(data);
     if (data.VideoLink && !/^https?:\/\//i.test(data.VideoLink)) {
       data.VideoLink = `https://${data.VideoLink}`;
     }
-    setActiveTab(1);
+
+    const husmodellCollectionRef = collection(db, "Husmodell");
+
+    const husdetaljerData = {
+      ...data,
+      link_3D_image: data.link_3D_image || null,
+    };
+
+    await addDoc(husmodellCollectionRef, {
+      Husdetaljer: husdetaljerData,
+      createdAt: new Date(),
+    });
+    toast.success("Add successfully", { position: "top-right" });
+
+    // setActiveTab(1);
   };
   const selectedHouseType = form.watch("TypeObjekt");
   return (
@@ -245,7 +357,13 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-6 w-[80%] shadow-shadow2 px-6 py-5 rounded-lg">
                   <div className="col-span-2">
-                    <p className={`text-black mb-[6px] text-sm font-medium`}>
+                    <p
+                      className={`${
+                        form.formState.errors.TypeObjekt
+                          ? "text-red"
+                          : "text-black"
+                      } mb-[6px] text-sm font-medium`}
+                    >
                       Type objekt
                     </p>
                     <div className="flex gap-4 items-center">
@@ -264,9 +382,10 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                       ].map((item: any, index: number) => (
                         <div
                           key={index}
-                          onClick={() =>
-                            form.setValue("TypeObjekt", item.value)
-                          }
+                          onClick={() => {
+                            form.setValue("TypeObjekt", item.value);
+                            form.clearErrors("TypeObjekt");
+                          }}
                           className={`border-2 rounded-lg p-2 cursor-pointer ${
                             selectedHouseType === item.value
                               ? "border-purple"
@@ -282,6 +401,11 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                         </div>
                       ))}
                     </div>
+                    {form.formState.errors.TypeObjekt && (
+                      <p className="text-red text-sm mt-1">
+                        {form.formState.errors.TypeObjekt.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <FormField
@@ -377,9 +501,9 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                           </p>
                           <FormControl>
                             <div className="flex items-center gap-5 w-full">
-                              {uploadPhoto instanceof File && (
+                              {uploadPhoto && (
                                 <img
-                                  src={URL.createObjectURL(uploadPhoto)}
+                                  src={uploadPhoto}
                                   alt="logo"
                                   height="140px"
                                   width="140px"
@@ -501,13 +625,13 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                     </div>
                     {upload3DPhoto && (
                       <div className="mt-5 flex items-center gap-5">
-                        {upload3DPhoto.map((file: any, index) => (
+                        {upload3DPhoto.map((file: any, index: number) => (
                           <div
                             className="relative h-[140px] w-[140px]"
                             key={index}
                           >
                             <img
-                              src={URL.createObjectURL(file)}
+                              src={file}
                               alt="logo"
                               height="100%"
                               width="100%"
@@ -517,7 +641,7 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                               className="absolute top-2 right-2 bg-[#FFFFFFCC] rounded-[12px] p-[6px] cursor-pointer"
                               onClick={() => {
                                 const updatedFiles = upload3DPhoto.filter(
-                                  (_, i) => i !== index
+                                  (_: any, i: number) => i !== index
                                 );
                                 form.setValue("photo3D", updatedFiles);
                               }}
@@ -697,7 +821,10 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                                               ? "border-red"
                                               : "border-gray1"
                                           } `}
-                                type="text"
+                                type="number"
+                                onChange={(e: any) =>
+                                  field.onChange(Number(e.target.value) || "")
+                                }
                               />
                             </div>
                           </FormControl>
@@ -730,7 +857,10 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                                               ? "border-red"
                                               : "border-gray1"
                                           } `}
-                                type="text"
+                                type="number"
+                                onChange={(e: any) =>
+                                  field.onChange(Number(e.target.value) || "")
+                                }
                               />
                             </div>
                           </FormControl>
@@ -763,7 +893,10 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                                               ? "border-red"
                                               : "border-gray1"
                                           } `}
-                                type="text"
+                                type="number"
+                                onChange={(e: any) =>
+                                  field.onChange(Number(e.target.value) || "")
+                                }
                               />
                             </div>
                           </FormControl>
@@ -796,7 +929,10 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                                               ? "border-red"
                                               : "border-gray1"
                                           } `}
-                                type="text"
+                                type="number"
+                                onChange={(e: any) =>
+                                  field.onChange(Number(e.target.value) || "")
+                                }
                               />
                             </div>
                           </FormControl>
@@ -1179,12 +1315,9 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
                           </p>
                           <FormControl>
                             <div className="flex items-center gap-5 w-full">
-                              {uploadPlantegningerFasaderPhoto instanceof
-                                File && (
+                              {uploadPlantegningerFasaderPhoto && (
                                 <img
-                                  src={URL.createObjectURL(
-                                    uploadPlantegningerFasaderPhoto
-                                  )}
+                                  src={uploadPlantegningerFasaderPhoto}
                                   alt="logo"
                                   height="140px"
                                   width="140px"
@@ -1299,13 +1432,12 @@ export const Husdetaljer: React.FC<{ setActiveTab: any }> = ({
             </div>
           </div>
           <div className="flex justify-end w-full gap-5 items-center sticky bottom-0 bg-white z-50 border-t border-gray2 p-4 left-0">
-            <div onClick={() => form.reset()} className="w-1/2 sm:w-auto">
+            <Link to={"/Husmodeller"} className="w-1/2 sm:w-auto">
               <Button
                 text="Avbryt"
-                className="border border-gray2 text-back text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
-                type="submit"
+                className="border border-gray2 text-black text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
               />
-            </div>
+            </Link>
             <Button
               text="Lagre"
               className="border border-purple bg-purple text-white text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"

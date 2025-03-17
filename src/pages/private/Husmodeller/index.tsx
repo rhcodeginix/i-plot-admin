@@ -13,7 +13,7 @@ export const Husmodeller = () => {
           <Button
             text="Legg til ny modell"
             className="border border-purple bg-purple text-white text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
-            path="/se-husmodell"
+            path="/add-husmodell"
           />
         </div>
         <HusmodellerTable />

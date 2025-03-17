@@ -45,6 +45,7 @@ export const Navbar: React.FC = () => {
             className={`text-base font-medium py-2 px-3 rounded-[6px] ${
               currentPath === "/Husmodeller" ||
               currentPath === "/se-husmodell" ||
+              currentPath === "/add-husmodell" ||
               currentPath === "/edit-husmodell"
                 ? "bg-lightPurple text-primary"
                 : "text-black"

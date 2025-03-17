@@ -7,7 +7,7 @@ interface Tab {
 interface TabsProps {
   tabs: Tab[];
   activeTab: any;
-  setActiveTab: any;
+  setActiveTab?: any;
 }
 
 const Tabs: React.FC<TabsProps> = ({ tabs, setActiveTab, activeTab }) => {
@@ -20,8 +20,8 @@ const Tabs: React.FC<TabsProps> = ({ tabs, setActiveTab, activeTab }) => {
             activeTab === index
               ? "border-primary font-semibold bg-lightPurple rounded-t-[12px]"
               : "border-transparent"
-          }`}
-          onClick={() => setActiveTab(index)}
+          } ${setActiveTab ? "cursor-pointer" : "cursor-auto"}`}
+          onClick={() => (setActiveTab ? setActiveTab(index) : undefined)}
         >
           {tab.label}
         </button>

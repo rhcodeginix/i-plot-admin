@@ -30,7 +30,7 @@ const formSchema = z.object({
       }),
     z.string(),
   ]),
-  company_name: z.string().min(2, {
+  company_name: z.string().min(1, {
     message: "Firmanavn må bestå av minst 2 tegn.",
   }),
   Orgnr: z.number().min(1, {
@@ -56,8 +56,8 @@ const formSchema = z.object({
   EPost: z
     .string()
     .email({ message: "Vennligst skriv inn en gyldig e-postadresse." })
-    .min(2, { message: "E-posten må være på minst 2 tegn." }),
-  Kontaktperson: z.string().min(2, {
+    .min(1, { message: "E-posten må være på minst 2 tegn." }),
+  Kontaktperson: z.string().min(1, {
     message: "Kontaktperson må bestå av minst 2 tegn.",
   }),
   KontaktpersonEPost: z
@@ -65,7 +65,7 @@ const formSchema = z.object({
     .email({
       message: "Vennligst skriv inn en gyldig Kontaktperson e-postadresse.",
     })
-    .min(2, { message: "Kontaktperson e-posten må være på minst 2 tegn." }),
+    .min(1, { message: "Kontaktperson e-posten må være på minst 2 tegn." }),
   KontaktpersonMobil: z
     .string()
     .min(8, { message: "Kontaktperson mobil må være 8 sifre." })
@@ -634,8 +634,7 @@ export const AddSuppliersForm = () => {
             <div onClick={() => form.reset()} className="w-1/2 sm:w-auto">
               <Button
                 text="Avbryt"
-                className="border border-gray2 text-back text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
-                type="submit"
+                className="border border-gray2 text-black text-sm rounded-[8px] h-[40px] font-medium relative px-4 py-[10px] flex items-center gap-2"
               />
             </div>
             <Button

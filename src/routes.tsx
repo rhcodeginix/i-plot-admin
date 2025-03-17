@@ -20,6 +20,7 @@ export const routes = createBrowserRouter([
       { path: "/Husmodeller", element: <Husmodeller /> },
       { path: "/se-husmodell", element: <SeHouseModel /> },
       { path: "/edit-husmodell", element: <EditHouseModel /> },
+      { path: "/add-husmodell", element: <EditHouseModel /> },
     ],
   },
 ]);

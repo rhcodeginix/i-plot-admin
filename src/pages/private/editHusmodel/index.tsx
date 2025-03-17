@@ -4,6 +4,7 @@ import { useState } from "react";
 import Tabs from "../../../components/ui/tabnav";
 import { Husdetaljer } from "./Husdetaljer";
 import { Huskonfigurator } from "./Huskonfigurator";
+import { Prisliste } from "./Prisliste";
 
 export const EditHouseModel = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -22,10 +23,6 @@ export const EditHouseModel = () => {
             Husmodeller
           </Link>
           <ChevronRight className="text-gray2 w-4 h-4" />
-          <Link to={"/Husmodeller"} className="text-gray text-sm font-medium">
-            Almgaard
-          </Link>
-          <ChevronRight className="text-gray2 w-4 h-4" />
           <span className="text-primary text-sm font-medium">
             Endre husmodell
           </span>
@@ -39,7 +36,7 @@ export const EditHouseModel = () => {
               Sum antatte anleggskostnader inkl. mva.
             </p>
             <h1 className="text-darkBlack font-bold text-[24px]">
-              Endre husmodell
+              8.451.200 NOK
             </h1>
           </div>
         </div>
@@ -54,6 +51,7 @@ export const EditHouseModel = () => {
         </div>
         {activeTab === 0 && <Husdetaljer setActiveTab={setActiveTab} />}
         {activeTab === 1 && <Huskonfigurator setActiveTab={setActiveTab} />}
+        {activeTab === 2 && <Prisliste setActiveTab={setActiveTab} />}
       </div>
     </>
   );
