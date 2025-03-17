@@ -27,7 +27,7 @@ const data = [
     id: 1,
     leverandor: Ic_Leverandor,
     Husmodell: Ic_husmodell,
-    husmodell: "Almgaard",
+    husmodell: "ST 66",
     Kategori: "Herskapelig",
     m2: 233,
     soverom: 5,
